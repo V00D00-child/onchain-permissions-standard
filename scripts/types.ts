@@ -8,60 +8,90 @@
 
 import { z } from 'zod';
 
-export const zAddress = z.object({
-  caip10Address: z.string(),
+export const zSigner = z.object({
+  // Despite the 7715 support for 'key' type,
+  // We're only supporting 'address' so that granted permissions
+  // can enforce sophisticated policies that do not fit within 4337's constraints.
+  type: z.enum(['address']),
+  data: z.any(),
 });
 
-export type Address = z.infer<typeof zAddress>;
+export type Signer = z.infer<typeof zSigner>;
 
 // Rather than only define permissions by name,
-// We can make this an object and leave room for forward-extensibility.
-export const zTypeDescriptor = z.object({
-  name: z.string(),
-  description: z.string().optional(),
+// Requestors can optionally make this an object and leave room for forward-extensibility.
+export const zTypeDescriptor = z.union([
+  z.string(),
+  z.object({
+    name: z.string(),
+    description: z.string().optional(),
+  })
+]);
+
+export const zPolicy = z.object({
+  type: zTypeDescriptor,
+  data: z.any().optional(),
 });
 
-export const zRequestedPermission = z.object({
-  sessionAccount: zAddress,
+export const Policy = z.infer<typeof zPolicy>;
+
+export const zPermission = z.object({
   type: zTypeDescriptor,
-  justification: z.string().optional(),
+  policies: z.array(zPolicy),
+  required: z.boolean().default(true),
 
   // Data is specific to this `type`, and will be interpreted by the permission's provider
   data: z
-    .object()
+    .any()
     .optional(),
 
-  required: z.boolean().optional(),
+  // Signer is not part of ERC-7715, but gives us better multichain support when available.
+  signer: zSigner.optional(),
+  justification: z.string().optional(),
+
 });
 
-export const Permission = z.infer<typeof zRequestedPermission>;
+export const Permission = z.infer<typeof zPermission>;
 
 export const zPermissionsRequest = z.object({
-  permissions: z.array(zRequestedPermission),
+  // account: z.string().optional(), // Excluded for reasons mentioned in 7715-issues.md
+  // chainId: z.number().optional(), // Excluded for reasons mentioned in 7715-issues.md
+
+  signer: zSigner.optional(), // Discouraged in favor of per-permission signer specification.
+
+  permissions: z.array(zPermission),
+
+  // expiry: z.number(), // Excluded for reasons mentioned in 7715-issues.md
 });
 
 export const PermissionsRequest = z.infer<typeof zPermissionsRequest>;
 
-export const zGrantedPolicy = z.object({
-  sessionAccount: zAddress,
-  type: zTypeDescriptor,
-
-  // Data can vary type by type,
-  // Is provided directly from the permission's provider.
-  data: z.object().optional(),
-});
-
 const zUpgradeOp = z.object({
-  target: zAddress,
+  target: zSigner,
   operation: z.string(),
 });
 
-export const zPermissionsResponse = z.object({
-  grantedPolicy: zGrantedPolicy,
-  submitToAddress: zAddress,
+export const zGrantedPermission = z.object({
+  sessionAccount: zSigner,
+  type: zTypeDescriptor,
+  signerMeta: z.object({
+    // userOpBuilder: z.string().startsWith('0x').optional(), // Excluded for reasons mentioned in 7715-issues.md
+    delegationManager: z.string().startsWith('0x').optional(),  
+  }),
   permissionsContext: z.string(),
-  initCode: z.string().optional(),
-  upgradeOps: z.array(zUpgradeOp).optional(),
+  accountMeta: z.object({
+    factory: z.string().startsWith('0x'),
+    factoryData: z.string().startsWith('0x'),
+    upgradeOps: z.array(zUpgradeOp).optional(),
+  }).optional(),
 });
 
-export const PermissionsResponse = z.infer<typeof zPermissionsResponse>;
+export const GrantedPermission = z.infer<typeof zGrantedPermission>;
+
+export const zGrantedPermissionsResponse = z.object({
+  grantedPermissions: z.array(zGrantedPermission),
+  expiry: z.number(),
+});
+
+export const GrantedPermissionsResponse = z.infer<typeof zGrantedPermissionsResponse>;
+
