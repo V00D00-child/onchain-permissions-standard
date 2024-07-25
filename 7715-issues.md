@@ -1,20 +1,10 @@
 # ERC-7715 Implementation Notes
 
+This repository is now trying to represent ERC-7715 to closely resemble the changes proposed [in this change](https://github.com/ilikesymmetry/ERCs/pull/1/files#diff-30a722e02b85e6e33ea9d633379985173e9a669ffffdbba3662e28c0ec8adbe7).
+
 The version of ERC-7715 that this repository implements has some differences from ERC-7715 as defined at time of writing this document, and includes some features that are not defined in 7715, but that I believe to be useful for the long term health of the standard. Most of the changes have been implemented in non-breaking ways, but some changes make this implementation incompatible with 7715.
 
 ## Blockers / Breaking Changes
-
-### Single Permissions Context for all Approved Permissions
-
-I have no idea how 7715 retained this design decision through all our discussions. It doesn't make any sense to me. I'm not even sure how to start arguing against it because I can't understand any argument for it aside from potentially a claimed "simplicity".
-
-This prevents multichain permissions. It prevents permissions from different accounts. It prevents granular, individual permissions payloads (like a counterfactual permission might be). By packing all permissions into a single context, it makes it harder for a requestor to account for multiple permissions intended for multiple uses delegated to multiple sub-agents who might not be trusted with the entire batch of permissions.
-
-Providing permissions context payloads on a per-permission basis is more flexible and secure. I cannot in good conscience support a single permissions context for all approved permissions, and so this is the single largest breaking change in this repository.
-
-### Single global chainId per request (required)
-
-This prevents 7715 from being multi-chain capable, and so at the very least this parameter MUST be made optional.
 
 ### Expiry is a policy and shouldn't be requestor-defined
 
@@ -23,25 +13,6 @@ It doesn't make any sense for the requestor to define how long the permissions t
 For this reason, while having an expiration time as a default on any granted permissions makes sense, this doesn't make sense as a required request parameter: The user may have their own default permission timer that overrides this number, a bad actor will always request the longest timeout (and so this value should be ignored anyways), and the concept of an expiry already fits well within the already-existent concept of a `policy`.
 
 ## Non Blocking
-
-### Global Requestor Account
-
-The optional `account` parameter in the `GrantPermissionsRequestParams` object needlessly constrains the scope of the permissions request, and requires an up-front wallet connection. I question the value of this parameter, but at least it's optional.
-
-For my initial implementation, I am leaving this out, because for reasons I've both [written about](https://docs.google.com/document/d/1l3_tIGGWMiBbboWeSeI4mIF9x5HO0Tf0GosMkRg6vPU/edit?usp=sharing) and [spoken about publicly](https://streameth.org/devconnect/watch?session=65b8f8d6a5b2d09b88ec192f), I think one of the security benefits of a permissions system like this comes from not making initial disclosures to the possible attacker before they state their terms. By not supporting this parameter, we promote a more secure wallet connection protocol.
-
-For these reasons, I am significantly changing the `GrantPermissionsResponse` object: The `grantedPermissions` are not of the original `Permission` type, but are of a `GrantedPermission` type, which includes additional properties: `accountMeta`, `permissionsContext`, `signerMeta`. I have left a global `expiry` as a convenience to consumers, but am not convinced it's worth its mandatory global state.
-
-This means the final `GrantedPermissionsResponse` object has only two properties, and could probably be reduced to just the array:
-
-```typescript
-type GrantedPermissionResponse = {
-  grantedPermissions: GrantedPermission[],
-  expiry: number,
-}
-```
-
-The full types can be viewed at [types](./scripts/types.ts).
 
 ### String Based Permission Types
 

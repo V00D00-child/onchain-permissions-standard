@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { kernelSnapOrigin, accountSnapOrigin } from '../config';
-import { Permission } from '../../../../scripts/types.ts';
+import { PermissionRequest } from '../../../../scripts/types.ts';
 
 import {
   ConnectButton,
