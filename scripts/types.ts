@@ -77,13 +77,14 @@ export const zGrantedPermission = z.object({
     // userOpBuilder: z.string().startsWith('0x').optional(), // Excluded for reasons mentioned in 7715-issues.md
     delegationManager: z.string().startsWith('0x').optional(),  
   }),
- 
-  // Not part of the standard yet, but could be nice to include:
-  permission: zPermissionRequest.optional(),
 });
+
+// Note that the response contains all of the parameters of the original request 
+// and it is not guaranteed that the values received are equivalent to those requested.
+export const zGrantedPermissionWithPermissionRequest = zGrantedPermission.merge(zPermissionRequest);
 
 export type GrantedPermission = z.infer<typeof zGrantedPermission>;
 
-export const zGrantedPermissionsResponse = z.array(zGrantedPermission);
+export const zGrantedPermissionsResponse = z.array(zGrantedPermissionWithPermissionRequest);
 
 export type GrantedPermissionsResponse = z.infer<typeof zGrantedPermissionsResponse>;
