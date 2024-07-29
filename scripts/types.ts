@@ -33,7 +33,7 @@ export const zPolicy = z.object({
   data: z.record(z.any()).optional(),
 });
 
-export const Policy = z.infer<typeof zPolicy>;
+export type Policy = z.infer<typeof zPolicy>;
 
 export const zAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
 
@@ -55,11 +55,11 @@ export const zPermissionRequest = z.object({
   justification: z.string().optional(),
 });
 
-export const PermissionRequest = z.infer<typeof zPermissionRequest>;
+export type PermissionRequest = z.infer<typeof zPermissionRequest>;
 
 export const zPermissionsRequest = z.array(zPermissionRequest);
 
-export const PermissionsRequest = z.infer<typeof zPermissionsRequest>;
+export type PermissionsRequest = z.infer<typeof zPermissionsRequest>;
 
 const zUpgradeOp = z.object({
   target: zSigner,
@@ -82,9 +82,8 @@ export const zGrantedPermission = z.object({
   permission: zPermissionRequest.optional(),
 });
 
-export const GrantedPermission = z.infer<typeof zGrantedPermission>;
+export type GrantedPermission = z.infer<typeof zGrantedPermission>;
 
 export const zGrantedPermissionsResponse = z.array(zGrantedPermission);
 
-export const GrantedPermissionsResponse = z.infer<typeof zGrantedPermissionsResponse>;
-
+export type GrantedPermissionsResponse = z.infer<typeof zGrantedPermissionsResponse>;
