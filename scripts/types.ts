@@ -33,7 +33,7 @@ export const zPolicy = z.object({
   data: z.record(z.any()).optional(),
 });
 
-export const Policy = z.infer<typeof zPolicy>;
+export type Policy = z.infer<typeof zPolicy>;
 
 export const zAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
 
@@ -55,11 +55,11 @@ export const zPermissionRequest = z.object({
   justification: z.string().optional(),
 });
 
-export const PermissionRequest = z.infer<typeof zPermissionRequest>;
+export type PermissionRequest = z.infer<typeof zPermissionRequest>;
 
 export const zPermissionsRequest = z.array(zPermissionRequest);
 
-export const PermissionsRequest = z.infer<typeof zPermissionsRequest>;
+export type PermissionsRequest = z.infer<typeof zPermissionsRequest>;
 
 const zUpgradeOp = z.object({
   target: zSigner,
@@ -77,14 +77,14 @@ export const zGrantedPermission = z.object({
     // userOpBuilder: z.string().startsWith('0x').optional(), // Excluded for reasons mentioned in 7715-issues.md
     delegationManager: z.string().startsWith('0x').optional(),  
   }),
- 
-  // Not part of the standard yet, but could be nice to include:
-  permission: zPermissionRequest.optional(),
 });
 
-export const GrantedPermission = z.infer<typeof zGrantedPermission>;
+// Note that the response contains all of the parameters of the original request 
+// and it is not guaranteed that the values received are equivalent to those requested.
+export const zGrantedPermissionWithPermissionRequest = zGrantedPermission.merge(zPermissionRequest);
 
-export const zGrantedPermissionsResponse = z.array(zGrantedPermission);
+export type GrantedPermission = z.infer<typeof zGrantedPermission>;
 
-export const GrantedPermissionsResponse = z.infer<typeof zGrantedPermissionsResponse>;
+export const zGrantedPermissionsResponse = z.array(zGrantedPermissionWithPermissionRequest);
 
+export type GrantedPermissionsResponse = z.infer<typeof zGrantedPermissionsResponse>;
